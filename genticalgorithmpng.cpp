@@ -312,7 +312,7 @@ public:
             evaluateFitness();
             
             if (generation % 100 == 0) {
-                 cout << "Generation " << generation << ": Best fitness = " <<  fixed <<  setprecision(4) << population[0].fitness <<  endl;
+                cout << "Generation " << generation << ": Best fitness = " <<  fixed <<  setprecision(4) << population[0].fitness <<  endl;
                 
                 // Save progress image every 500 generations
                 if (generation % 500 == 0) {
