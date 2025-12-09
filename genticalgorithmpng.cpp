@@ -1,12 +1,13 @@
-#include <iostream>  // Used for cout, cerr, cin, endl
-#include <vector>    // Used extensively for vectors
-#include <random>    // Used for mt19937, uniform_int_distribution, etc.
-#include <algorithm> // Used for sort()
-#include <cmath>     // Used for sqrt(), abs() 
-#include <iomanip>   // Used for setprecision
+#include <iostream>  
 #include <ctime>     
 #include <fstream>  
 #include <string>    
+#include <vector>   
+#include <random>    // Used for mt19937 and uniform_int_distribution
+#include <algorithm> // Used for sort()
+#include <cmath>     // Used for sqrt(), abs() 
+#include <iomanip>   // Used for setprecision
+ 
 
 // Simple PNG writer implementation (https://github.com/nothings/stb/blob/master/stb_image_write.h)
 #define STB_IMAGE_WRITE_IMPLEMENTATION
