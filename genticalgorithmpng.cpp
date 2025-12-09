@@ -54,7 +54,7 @@ struct Individual {
     
     // Initialize with random pixels
     void randomize(mt19937& gen) {
-         uniform_int_distribution <> colorDist(0, 255);
+        uniform_int_distribution <> colorDist(0, 255);
         
         for (auto& pixel : pixels) {
             pixel.r = colorDist(gen);
@@ -79,14 +79,14 @@ struct Individual {
     // Crossover: mix two parents to create a child
     static Individual crossover(const Individual& parent1, const Individual& parent2, mt19937& gen) {
         Individual child;
-		uniform_int_distribution <> methodDist(0, 2);
+        uniform_int_distribution <> methodDist(0, 2);
         
         int method = methodDist(gen);
         
         switch(method) {
             case 0: // Uniform crossover
                 for (size_t i = 0; i < child.pixels.size(); i++) {
-                     uniform_int_distribution<> choiceDist(0, 1);
+                    uniform_int_distribution<> choiceDist(0, 1);
                     if (choiceDist(gen) == 0) {
                         child.pixels[i] = parent1.pixels[i];
                     } else {
@@ -123,7 +123,7 @@ struct Individual {
     
     // Mutate the individual
     void mutate(mt19937& gen, double mutationRate, int mutationStrength) {
-         uniform_real_distribution<> probDist(0.0, 1.0);
+        uniform_real_distribution<> probDist(0.0, 1.0);
         
         for (auto& pixel : pixels) {
             if (probDist(gen) < mutationRate) {
@@ -135,6 +135,7 @@ struct Individual {
     // Convert pixels to RGB array for PNG
     vector<unsigned char> toRGBArray() const {
         vector<unsigned char> rgb(32 * 32 * 3);
+        
         for (size_t i = 0; i < pixels.size(); i++) {
             rgb[i * 3] = pixels[i].r;
             rgb[i * 3 + 1] = pixels[i].g;
