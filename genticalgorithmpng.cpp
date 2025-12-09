@@ -1,3 +1,14 @@
+/*
+* Group members: Nathan Waggoner, ...
+* December 9th, 2025
+* CS 441 AI
+* Anthony Rhodes
+*
+* Program that generates as close of an image to a target image as it can using a genetic algorithm.
+* Writes to PNG and html formats. 
+*/
+
+
 #include <iostream>  
 #include <ctime>     
 #include <fstream>  
