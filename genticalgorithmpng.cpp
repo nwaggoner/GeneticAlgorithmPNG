@@ -330,7 +330,7 @@ public:
     }
     
     bool saveBestImagePNG(const string& filename) {
-         vector<unsigned char> rgb = population[0].toRGBArray();
+        vector<unsigned char> rgb = population[0].toRGBArray();
         
         // stbi_write_png returns 0 on failure
         int result = stbi_write_png(filename.c_str(), 32, 32, 3, rgb.data(), 32 * 3);
