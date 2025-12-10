@@ -11,5 +11,7 @@ A genetic algorithm for generating PNG files with a target image.
 
 # Dependencies
 Requires that you include "std_image_write.h". 
-sourced from: https://github.com/nothings/stb/blob/master/stb_image_write.h
+
+Source: https://github.com/nothings/stb/blob/master/stb_image_write.h
+
 
