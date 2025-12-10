@@ -443,15 +443,6 @@ int main() {
     
     ga.saveBestImagePNG("best_final.png");
     
-    
-
-	cout << "\n" <<  string(60, '=') <<  endl;
-	cout << "FILES CREATED:" <<  endl;
-	cout <<  string(60, '=') <<  endl;
-	cout << "1. target_image.png    - The target image to evolve toward" <<  endl;
-	cout << "2. initial_random.png  - Random starting image (generation 0)" <<  endl;
-	cout << "3. best_final.png      - Best evolved image after " << ga.getGeneration() << " generations" <<  endl;
-	cout << "4. progress_gen_*.png  - Progress images every 500 generations" <<  endl;
 
     // Create a simple HTML viewer
     ofstream html("view_images.html");
@@ -496,8 +487,17 @@ int main() {
     html.close();
    
     
+    
+    cout << "\n" <<  string(60, '=') <<  endl;
+	cout << "FILES CREATED:" <<  endl;
+	cout <<  string(60, '=') <<  endl;
+	cout << "1. target_image.png    - The target image to evolve toward" <<  endl;
+	cout << "2. initial_random.png  - Random starting image (generation 0)" <<  endl;
+	cout << "3. best_final.png      - Best evolved image after " << ga.getGeneration() << " generations" <<  endl;
+	cout << "4. progress_gen_*.png  - Progress images every 500 generations" <<  endl;
+    cout << "5. view_images.html    - HTML preview of results. Open in a browser." <<  endl;
 	cout << "\n" <<  string(60, '=') <<  endl;
-	cout << "EVOLUTION COMPLETE! Check the generated PNG/HTML files." <<  endl;
+	cout << "PROGRAM COMPLETE! Check the generated PNG/HTML files." <<  endl;
 	cout <<  string(60, '=') <<  endl;
     
     return 0;
