@@ -41,8 +41,8 @@ struct Pixel {
     
     // Mutation: randomly adjust a color channel
     void mutate(mt19937& gen, int mutationStrength) {
-		uniform_int_distribution <> dist(0, 2);
-		uniform_int_distribution <> changeDist(-mutationStrength, mutationStrength);
+		uniform_int_distribution<> dist(0, 2);
+		uniform_int_distribution<> changeDist(-mutationStrength, mutationStrength);
         
         int channel = dist(gen);
         int change = changeDist(gen);
@@ -66,7 +66,7 @@ struct Individual {
     
     // Initialize with random pixels
     void randomize(mt19937& gen) {
-        uniform_int_distribution <> colorDist(0, 255);
+        uniform_int_distribution<> colorDist(0, 255);
         
         for (auto& pixel : pixels) {
             pixel.r = colorDist(gen);
@@ -91,7 +91,7 @@ struct Individual {
     // Crossover: mix two parents to create a child
     static Individual crossover(const Individual& parent1, const Individual& parent2, mt19937& gen) {
         Individual child;
-        uniform_int_distribution <> methodDist(0, 2);
+        uniform_int_distribution<> methodDist(0, 2);
         
         int method = methodDist(gen);
         
@@ -160,8 +160,8 @@ struct Individual {
 // Genetic Algorithm class
 class GeneticAlgorithm {
 private:
-    vector <Individual> population;
-    vector <Pixel> targetImage;
+    vector<Individual> population;
+    vector<Pixel> targetImage;
     mt19937 gen;
     int populationSize;
     double mutationRate;
@@ -379,6 +379,7 @@ public:
     const  vector<Pixel>& getTargetPixels() const { return targetImage; }
     const  string& getTargetName() const { return targetName; }
     int getGeneration() const { return generation; }
+    double getFitness() const { return population[0].fitness; }
 };
 
 
@@ -472,6 +473,7 @@ int main() {
     html << "    <div class='info'>\n";
     html << "        <p>Target Pattern: " << ga.getTargetName() << "</p>\n";
     html << "        <p>Generations: " << ga.getGeneration() << "</p>\n";
+    html << "        <p>Best fitness: " << ga.getFitness() << "</p>\n";
     html << "        <p>Images are 32x32 pixels, scaled 10x for viewing</p>\n";
     html << "    </div>\n";
     html << "    <div class='container'>\n";
