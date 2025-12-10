@@ -393,8 +393,8 @@ int main() {
     const double MUTATION_RATE = 0.03;
     const int MUTATION_STRENGTH = 25;   // Effects rgb value mutation
     const double CROSSOVER_RATE = 0.6;  // Probability that a crossover will take place versus a mutation.
-    const int MAX_GENERATIONS = 5000; 
-    const double TARGET_FITNESS = 0.96; // Results reach a limit at 0.96 in some testing. 
+    const int MAX_GENERATIONS = 10000; 
+    const double TARGET_FITNESS = 0.99; // Results reach a limit at 0.96 in some testing. 
     
 
     GeneticAlgorithm ga(POPULATION_SIZE, MUTATION_RATE, MUTATION_STRENGTH, CROSSOVER_RATE);
