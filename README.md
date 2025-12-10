@@ -5,7 +5,7 @@ A genetic algorithm for generating PNG files with a target image.
 # Compile with
 `g++ -std=c++17 genticalgorithmpng.cpp -o ga_png`
 
-# To run on a Linux 
+# To run on Linux 
 `./ga_png` 
 
 
