@@ -1,5 +1,5 @@
 /*
-* Group members: Nathan Waggoner, ...
+* Group members: Nathan Waggoner, Gustavo A. Cotom
 * December 9th, 2025
 * CS 441 AI
 * Anthony Rhodes
@@ -24,7 +24,16 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 
+// Simple PNG/image reader implementation (https://github.com/nothings/stb/blob/master/stb_image.h)
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
 using namespace std;
+
+// Central image size constant — change this to increase/decrease image resolution
+const int IMAGE_SIZE = 32;
+// Scale factor used in the HTML viewer (pixelated upscaling)
+const int IMAGE_SCALE = 10; // resulting display size = IMAGE_SIZE * IMAGE_SCALE
 
 
 // Pixel structure to store RGB values
@@ -61,7 +70,7 @@ struct Individual {
     double fitness;
     
     Individual() : fitness(0.0) {
-        pixels.resize(32 * 32);
+        pixels.resize(IMAGE_SIZE * IMAGE_SIZE);
     }
     
     // Initialize with random pixels
@@ -78,7 +87,7 @@ struct Individual {
     // Calculate fitness based on similarity to target
     void calculateFitness(const vector<Pixel>& target) {
         double totalDiff = 0.0;
-        double maxPossibleDiff = 32 * 32 * 255 * 3; // Maximum possible difference
+        double maxPossibleDiff = IMAGE_SIZE * IMAGE_SIZE * 255 * 3; // Maximum possible difference
         
         for (size_t i = 0; i < pixels.size(); i++) {
             totalDiff += pixels[i].difference(target[i]);
@@ -146,7 +155,7 @@ struct Individual {
     
     // Convert pixels to RGB array for PNG
     vector<unsigned char> toRGBArray() const {
-        vector<unsigned char> rgb(32 * 32 * 3);
+        vector<unsigned char> rgb(IMAGE_SIZE * IMAGE_SIZE * 3);
         
         for (size_t i = 0; i < pixels.size(); i++) {
             rgb[i * 3] = pixels[i].r;
@@ -174,7 +183,7 @@ public:
     GeneticAlgorithm(int popSize, double mutRate, int mutStrength, double crossRate) : populationSize(popSize), mutationRate(mutRate), mutationStrength(mutStrength), crossoverRate(crossRate), generation(0) 
 	{
         gen.seed( time(nullptr));
-        targetImage.resize(32 * 32);
+        targetImage.resize(IMAGE_SIZE * IMAGE_SIZE);
         initializePopulation();
     }
     
@@ -190,30 +199,75 @@ public:
     // Create different sample target images
     enum TargetType {GRADIENT, CIRCLE, CHECKERBOARD, STRIPES};
     
+    bool loadCustomTarget(const string& filename) {
+        int width, height, channels;
+        
+        cout << "Attempting to load image from: " << filename << endl;
+        unsigned char* data = stbi_load(filename.c_str(), &width, &height, &channels, 3);
+        
+        if (!data) {
+            cerr << "Error: stbi_load failed for " << filename << endl;
+            cerr << "Reason: " << stbi_failure_reason() << endl;
+            return false;
+        }
+        
+        cout << "Loaded image: " << width << "x" << height << " with " << channels << " channels" << endl;
+        
+        // Resize/resample to 32x32 if different
+        if (width != 32 || height != 32) {
+            cout << "Resampling from " << width << "x" << height << " to 32x32" << endl;
+        }
+        
+        targetImage.clear();
+        targetImage.resize(32 * 32);
+        
+        // Simple nearest-neighbor resampling to IMAGE_SIZE x IMAGE_SIZE
+        for (int y = 0; y < IMAGE_SIZE; y++) {
+            for (int x = 0; x < IMAGE_SIZE; x++) {
+                int srcX = (x * width) / IMAGE_SIZE;
+                int srcY = (y * height) / IMAGE_SIZE;
+                int srcIdx = (srcY * width + srcX) * 3;
+                int dstIdx = y * IMAGE_SIZE + x;
+                
+                // Bounds check to prevent out of bounds access
+                if (srcIdx + 2 < width * height * 3) {
+                    targetImage[dstIdx] = Pixel(data[srcIdx], data[srcIdx + 1], data[srcIdx + 2]);
+                } else {
+                    targetImage[dstIdx] = Pixel(0, 0, 0);
+                }
+            }
+        }
+        
+        stbi_image_free(data);
+        targetName = filename;
+        cout << "Successfully loaded custom image: " << filename << endl;
+        return true;
+    }
+    
     void createSampleTarget(TargetType type = GRADIENT) {
         targetName = "";
         
-        for (int y = 0; y < 32; y++) {
-            for (int x = 0; x < 32; x++) {
-                int index = y * 32 + x;
+        for (int y = 0; y < IMAGE_SIZE; y++) {
+            for (int x = 0; x < IMAGE_SIZE; x++) {
+                int index = y * IMAGE_SIZE + x;
                 
                 switch(type) {
                     case GRADIENT:
                         targetName = "gradient";
                         // Create a gradient pattern
                         targetImage[index] = Pixel(
-                            (x * 255 / 31),          // Red increases horizontally
-                            (y * 255 / 31),          // Green increases vertically
-                            ((x + y) * 255 / 62)     // Blue increases diagonally
+                            (x * 255 / (IMAGE_SIZE - 1)),          // Red increases horizontally
+                            (y * 255 / (IMAGE_SIZE - 1)),          // Green increases vertically
+                            ((x + y) * 255 / ((IMAGE_SIZE - 1) * 2))     // Blue increases diagonally
                         );
                         break;
                         
                     case CIRCLE:
                         targetName = "circle";
 						{
-							float centerX = 16.0f;
-							float centerY = 16.0f;
-							float radius = 10.0f;
+                    float centerX = IMAGE_SIZE / 2.0f;
+                    float centerY = IMAGE_SIZE / 2.0f;
+                    float radius = IMAGE_SIZE * 0.3125f; // ~10 for 32
 							float dist = sqrt((x - centerX) * (x - centerX) + (y - centerY) * (y - centerY));
 							
 							if (dist <= radius) {
@@ -226,7 +280,7 @@ public:
                         
                     case CHECKERBOARD:
                         targetName = "checkerboard";
-                        if (((x / 4) + (y / 4)) % 2 == 0) {
+                        if (((x / (IMAGE_SIZE/8)) + (y / (IMAGE_SIZE/8))) % 2 == 0) {
                             targetImage[index] = Pixel(255, 255, 255);  // White
                         } else {
                             targetImage[index] = Pixel(0, 0, 0);        // Black
@@ -235,7 +289,7 @@ public:
                         
                     case STRIPES:
                         targetName = "stripes";
-                        if (x % 8 < 4) {
+                        if (x % (IMAGE_SIZE/4) < (IMAGE_SIZE/8)) {
                             targetImage[index] = Pixel(255, 0, 0);      // Red stripe
                         } else {
                             targetImage[index] = Pixel(255, 255, 0);    // Yellow stripe
@@ -345,7 +399,7 @@ public:
         vector<unsigned char> rgb = population[0].toRGBArray();
         
         // stbi_write_png returns 0 on failure
-        int result = stbi_write_png(filename.c_str(), 32, 32, 3, rgb.data(), 32 * 3);
+        int result = stbi_write_png(filename.c_str(), IMAGE_SIZE, IMAGE_SIZE, 3, rgb.data(), IMAGE_SIZE * 3);
         
         if (result) {
             cout << "Saved: " << filename <<  endl;
@@ -364,7 +418,19 @@ public:
             rgb[i * 3 + 2] = targetImage[i].b;
         }
         
-        int result = stbi_write_png(filename.c_str(), 32, 32, 3, rgb.data(), 32 * 3);
+        vector<unsigned char> rgb2(IMAGE_SIZE * IMAGE_SIZE * 3);
+        // If targetImage is already IMAGE_SIZE, copy directly; else we generated rgb accordingly above
+        if (targetImage.size() == (size_t)(IMAGE_SIZE * IMAGE_SIZE)) {
+            for (size_t i = 0; i < targetImage.size(); ++i) {
+                rgb2[i * 3] = targetImage[i].r;
+                rgb2[i * 3 + 1] = targetImage[i].g;
+                rgb2[i * 3 + 2] = targetImage[i].b;
+            }
+        } else {
+            rgb2 = rgb; // fallback (shouldn't normally happen)
+        }
+
+        int result = stbi_write_png(filename.c_str(), IMAGE_SIZE, IMAGE_SIZE, 3, rgb2.data(), IMAGE_SIZE * 3);
         
         if (result) {
             cout << "Saved: " << filename <<  endl;
@@ -400,30 +466,61 @@ int main() {
 
     GeneticAlgorithm ga(POPULATION_SIZE, MUTATION_RATE, MUTATION_STRENGTH, CROSSOVER_RATE);
     
-    // Choose target pattern
-	cout << "\nChoose target pattern to evolve:" <<  endl;
-	cout << "1. Color Gradient" <<  endl;
-	cout << "2. Circle" <<  endl;
-	cout << "3. Checkerboard" <<  endl;
-	cout << "4. Stripes" <<  endl;
-	cout << "Enter choice (1-4): ";
+    // Choose target source
+    cout << "\nChoose target source:" << endl;
+    cout << "1. Color Gradient (sample)" << endl;
+    cout << "2. Circle (sample)" << endl;
+    cout << "3. Checkerboard (sample)" << endl;
+    cout << "4. Stripes (sample)" << endl;
+    cout << "5. Load custom image (PNG/JPG)" << endl;
+    cout << "Enter choice (1-5): ";
     
     int choice;
     cin >> choice;
+    cin.ignore(); // Clear input buffer
     
-    GeneticAlgorithm::TargetType targetType;
-    
-    switch(choice) {
-        case 1: targetType = GeneticAlgorithm::GRADIENT; break;
-        case 2: targetType = GeneticAlgorithm::CIRCLE; break;
-        case 3: targetType = GeneticAlgorithm::CHECKERBOARD; break;
-        case 4: targetType = GeneticAlgorithm::STRIPES; break;
-        default: targetType = GeneticAlgorithm::GRADIENT; break;
+    if (choice == 5) {
+        // Load custom image
+        cout << "\nEnter the path to your image file:" << endl;
+        cout << "Example: C:\\Users\\gcoto\\Downloads\\psu.jpg" << endl;
+        cout << "Or just: myimage.png (if in current directory)" << endl;
+        cout << "Path: ";
+        string imagePath;
+        getline(cin, imagePath);
+        
+        // If empty, use default path
+        if (imagePath.empty()) {
+            imagePath = "C:\\Users\\gcoto\\Downloads\\psu.jpg";
+            cout << "Using default path: " << imagePath << endl;
+        }
+        
+        // Remove quotes if present
+        if (!imagePath.empty() && imagePath.front() == '\"') {
+            imagePath = imagePath.substr(1);
+        }
+        if (!imagePath.empty() && imagePath.back() == '\"') {
+            imagePath = imagePath.substr(0, imagePath.length() - 1);
+        }
+        
+        cout << "\nLoading custom image..." << endl;
+        if (!ga.loadCustomTarget(imagePath)) {
+            cout << "Failed to load image. Defaulting to gradient pattern." << endl;
+            ga.createSampleTarget(GeneticAlgorithm::GRADIENT);
+        }
+    } else {
+        GeneticAlgorithm::TargetType targetType;
+        
+        switch(choice) {
+            case 1: targetType = GeneticAlgorithm::GRADIENT; break;
+            case 2: targetType = GeneticAlgorithm::CIRCLE; break;
+            case 3: targetType = GeneticAlgorithm::CHECKERBOARD; break;
+            case 4: targetType = GeneticAlgorithm::STRIPES; break;
+            default: targetType = GeneticAlgorithm::GRADIENT; break;
+        }
+        
+        cout << "\nCreating target image..." << endl;
+        ga.createSampleTarget(targetType);
     }
-    
-    // Create target image
-    cout << "\nCreating target image..." <<  endl;
-    ga.createSampleTarget(targetType);
     
 	// Save target image
     ga.saveTargetImagePNG("target_image.png");
@@ -465,20 +562,20 @@ int main() {
     html << "        <p>Target Pattern: " << ga.getTargetName() << "</p>\n";
     html << "        <p>Generations: " << ga.getGeneration() << "</p>\n";
     html << "        <p>Best fitness: " << ga.getFitness() << "</p>\n";
-    html << "        <p>Images are 32x32 pixels, scaled 10x for viewing</p>\n";
+    html << "        <p>Images are " << IMAGE_SIZE << "x" << IMAGE_SIZE << " pixels, scaled " << IMAGE_SCALE << "x for viewing</p>\n";
     html << "    </div>\n";
     html << "    <div class='container'>\n";
     html << "        <div class='image-box'>\n";
     html << "            <h3>Target Image</h3>\n";
-    html << "            <img src='target_image.png' alt='Target'>\n";
+    html << "            <img src='target_image.png' alt='Target' style='width: " << (IMAGE_SIZE * IMAGE_SCALE) << "px; height: " << (IMAGE_SIZE * IMAGE_SCALE) << "px;'>\n";
     html << "        </div>\n";
     html << "        <div class='image-box'>\n";
     html << "            <h3>Initial Random</h3>\n";
-    html << "            <img src='initial_random.png' alt='Initial'>\n";
+    html << "            <img src='initial_random.png' alt='Initial' style='width: " << (IMAGE_SIZE * IMAGE_SCALE) << "px; height: " << (IMAGE_SIZE * IMAGE_SCALE) << "px;'>\n";
     html << "        </div>\n";
     html << "        <div class='image-box'>\n";
     html << "            <h3>Final Evolved</h3>\n";
-    html << "            <img src='best_final.png' alt='Final'>\n";
+    html << "            <img src='best_final.png' alt='Final' style='width: " << (IMAGE_SIZE * IMAGE_SCALE) << "px; height: " << (IMAGE_SIZE * IMAGE_SCALE) << "px;'>\n";
     html << "        </div>\n";
     html << "    </div>\n";
     html << "    <p>Open this HTML file in any web browser to view the images.</p>\n";
@@ -491,9 +588,9 @@ int main() {
     cout << "\n" <<  string(60, '=') <<  endl;
 	cout << "FILES CREATED:" <<  endl;
 	cout <<  string(60, '=') <<  endl;
-	cout << "1. target_image.png    - The target image to evolve toward" <<  endl;
-	cout << "2. initial_random.png  - Random starting image (generation 0)" <<  endl;
-	cout << "3. best_final.png      - Best evolved image after " << ga.getGeneration() << " generations" <<  endl;
+    cout << "1. target_image.png    - The target image to evolve toward" <<  endl;
+    cout << "2. initial_random.png  - Random starting image (generation 0)" <<  endl;
+    cout << "3. best_final.png      - Best evolved image after " << ga.getGeneration() << " generations" <<  endl;
 	cout << "4. progress_gen_*.png  - Progress images every 500 generations" <<  endl;
     cout << "5. view_images.html    - HTML preview of results. Open in a browser." <<  endl;
 	cout << "\n" <<  string(60, '=') <<  endl;
