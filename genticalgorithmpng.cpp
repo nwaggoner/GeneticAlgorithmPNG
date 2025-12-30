@@ -1,5 +1,4 @@
 /*
-* Group members: Nathan Waggoner, ...
 * December 9th, 2025
 * CS 441 AI
 * Anthony Rhodes
@@ -502,3 +501,4 @@ int main() {
     
     return 0;
 }
+
